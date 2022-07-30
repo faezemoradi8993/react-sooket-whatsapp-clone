@@ -15,13 +15,13 @@ export const ConversationsContextProvider = ({ children, id }) => {
     const createConversation = (recipients) => setConversations(pre => { return [...pre, { recipients, messages: [] }] })
 
     const addMessageToConversation = ({ recipients, text, sender }) => {
-        setConversations(prev => {
+        setConversations(prevConversation => {
 
             let madeChange = false
 
             let newMessage = { sender, text }
 
-            const newConversations = prev.map((conversation) => {
+            const newConversations = prevConversation.map((conversation) => {
                 if (arrayEquality(conversation.recipients, recipients)) {
                     madeChange = true
                     return {
@@ -34,7 +34,7 @@ export const ConversationsContextProvider = ({ children, id }) => {
             if (madeChange) {
                 return newConversations
             } else {
-                return [...prev, { recipients, messages: [newMessage] }]
+                return [...prevConversation, { recipients, messages: [newMessage] }]
             }
 
         })
@@ -53,8 +53,16 @@ export const ConversationsContextProvider = ({ children, id }) => {
             const name = (contact && contact.name) || recepient
             return { id: recepient, name }
         })
+        const messages = conversation.messages.map(message => {
+            const contact = contacts.find(contact => {
+                return contact.id === message.sender
+            })
+            const name = (contact && contact.name) || message.sender
+            const fromMe = id === message.sender
+            return { ...message, senderName: name, fromMe }
+        })
         const selected = index === selectConversationIndex
-        return { ...conversation, recipients, selected }
+        return { ...conversation, messages, recipients, selected }
     })
 
     const value = {
@@ -71,14 +79,6 @@ export const ConversationsContextProvider = ({ children, id }) => {
         </conversationsContext.Provider>
     )
 }
-
-
-
-
-
-
-
-
 
 const arrayEquality = (a, b) => {
     if (a.length !== b.length) return false
